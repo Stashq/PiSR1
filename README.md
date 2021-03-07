@@ -29,3 +29,10 @@ prezentacji 40 minut
 - **Diversity** - różnorodność to cecha porządana dla systemóœ rekomendujących. Bywa, że mają tendencję do faworyzowania pewnych obiektów. Literatura wskazuje takie rozwiązania jak _K-Furthest Neighbors_ (odwrotność KNN) lub znajdowywanie takich użytkowników, którzy mają uważani są za "ekspertów", mają "dobry smak" i podpowiadanie użytkownikom "normalnym" rzeczy, które lubią "eksperci".
 - inne problemy takie jak: brak personalizacji, ochrona prywatności, redukcja szumów, integracja źródeł danych, brak nowości i adaptacja do preferencji użytkownika.
 
+## Techniki w uczeniu maszynowym
+- **K-NN** - technika popularna dla Collaborative Filtering.
+- **Clustering** - najpopularniejszy jest _K-means_. 
+- **Fuzzy logic** - uważane za komplementarne w stosunku do metod z rodziny Collaborative, często używane wraz z nimi.
+- **Matrix manipulation** - należą do tej rodziny techniki takie jak: _Singular Value Decomposition_ (SVD), _Latent Dirichlet Allocation_ (LDA), _Principal Component Analysis_ (PCA), _Dimensionality Reduction_ oraz _similar matrix factorization_.
+- inne, rzadziej wykorzystywane techniki: _Genetic Algorithms_, _Naive Bayes_, _Neural Networks_, _Notion of Experts_, _Statistical Modeling_, ect.
+
