@@ -20,6 +20,12 @@ istniejącymi projektami 1h
 prezentacji 40 minut
 
 
+## Collaborative Filtering
+Wyobraźmy sobie, że mamy macierz, której komórki reprezentują recenzje obiektów pozostawione przez użytkowników. W kolumnach umieszczone mamy recencje dla konkretnych obiektów, a w wierszach recencje konkretnych użytkowników. Wyróżniamy następujące rodzaje Collaborative Filteringu:
+- **user-user** - porównujemy użytkowników (wiersze) i zwracamy dla użytkownika te obiekty, które wystąpiły u podobnych użytkowników z wysokim rankingiem. Działa świetnie gdy jest mało użytkowników (wierszy) i dużo obiektów (kolumn).
+- **item-item** - porównujemy obiekty (kolumny) i obserwując oceny między nimi uzupełniamy ich wybrakowane oceny. Działa świetnie gdy jest mało obiektów (kolumn) i dużo użytkowników (wierszy). 
+- **user-item** - wykorzystuje cechy obu poprzednich technik. Najprostsza z metod oparta jest na faktoryzacji macierzy, dzięki której otrzymujemy osadzenia.
+
 ## Problemy opisywane w literaturze
 
 - **Cold-start** - problem związany z wchodzeniem do systemu nowych użytkowników i obiektów, o których nic nie wiemy. Często stosowane są pytania do użytkowników przed dołączeniem do systemu lub pobieranie o nich informacji z innych źródeł (media społecznościowe, ect.)
