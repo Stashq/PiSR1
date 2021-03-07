@@ -24,7 +24,9 @@ prezentacji 40 minut
 Wyobraźmy sobie, że mamy macierz, której komórki reprezentują recenzje obiektów pozostawione przez użytkowników. W kolumnach umieszczone mamy recencje dla konkretnych obiektów, a w wierszach recencje konkretnych użytkowników. Wyróżniamy następujące rodzaje Collaborative Filteringu:
 - **user-user** - porównujemy użytkowników (wiersze) i zwracamy dla użytkownika te obiekty, które wystąpiły u podobnych użytkowników z wysokim rankingiem. Działa świetnie gdy jest mało użytkowników (wierszy) i dużo obiektów (kolumn).
 - **item-item** - porównujemy obiekty (kolumny) i obserwując oceny między nimi uzupełniamy ich wybrakowane oceny. Działa świetnie gdy jest mało obiektów (kolumn) i dużo użytkowników (wierszy). 
-- **user-item** - wykorzystuje cechy obu poprzednich technik. Najprostsza z metod oparta jest na faktoryzacji macierzy, dzięki której otrzymujemy osadzenia opisujące jak bardzo dany obiekt zawiera daną cechę i jakimi obiektami interesuje się dany użytkownik.
+- **user-item** - wykorzystuje cechy obu poprzednich technik. Najprostsza z metod oparta jest na faktoryzacji macierzy, dzięki której otrzymujemy osadzenia opisujące jak bardzo dany obiekt zawiera daną cechę i jakimi obiektami interesuje się dany użytkownik. Najczęściej wykorzystywane metody z tej rodziny to:
+    - **Singular Value Decomposition** - najpopularniejsza z tej rodziny metod. Przedmioty i użytkowników reprezentujemy w postaci wektorów tak, że po przemnożeniu otrzymujemy wysokość oceny. Metoda ta jest wymagająca obliczeniowo i słabo skalowanlna.
+    - **Alternating Least Square** - metoda nadająca się do wykorzystania przy średniej wielkości danych.
 
 ## Problemy opisywane w literaturze
 
@@ -32,7 +34,8 @@ Wyobraźmy sobie, że mamy macierz, której komórki reprezentują recenzje obie
 - **Data sparsity** - macierz reprezentująca relacje użytkowników i przedmiotów zazwyczaj będzie rzadko wypełniona liczbami. Aby sobie z tym radzić można skorzystać z faktoryzacji macierzy.
 - **Accuracy** - poprawa dokładności systemu jest trudnym zadaniem szczególnie gdy dane są rzadkie. Dodatkowo dochodzi problem z walidacją rozwiązania, część rozwiązań systemu nie może być porównana z rzeczywistym wynikiem, gdyż nie jesteśmy w stanie sprawdzić jak użytkownik zareaguje na kontent, który mu proponujemy (a takich przypadków może być bardzo dużo).
 - **Scalability** - skalowalność związana jest z liczbą użytkowników i obiektów, dla których system ma działać. System zaprojektowany do polecania kilku obiektów setkom ludzi nie będzie działał przy kilku tysiącach przedmiotów i kilku milionach użytkowników, mimo iż proporcja między nimi zostanie zachowana. 
-- **Diversity** - różnorodność to cecha porządana dla systemóœ rekomendujących. Bywa, że mają tendencję do faworyzowania pewnych obiektów. Literatura wskazuje takie rozwiązania jak _K-Furthest Neighbors_ (odwrotność KNN) lub znajdowywanie takich użytkowników, którzy mają uważani są za "ekspertów", mają "dobry smak" i podpowiadanie użytkownikom "normalnym" rzeczy, które lubią "eksperci".
+- **Diversity** - różnorodność to cecha porządana dla systemów rekomendujących. Bywa, że mają tendencję do faworyzowania pewnych obiektów. Literatura wskazuje takie rozwiązania jak _K-Furthest Neighbors_ (odwrotność KNN) lub znajdowywanie takich użytkowników, którzy mają uważani są za "ekspertów", mają "dobry smak" i podpowiadanie użytkownikom "normalnym" rzeczy, które lubią "eksperci".
+- **Popularity bias** - występuje, gdy system rekomenduje obiekty z największą liczbą interakcji, bez jakiejkolwiek personalizacji.
 - inne problemy takie jak: brak personalizacji, ochrona prywatności, redukcja szumów, integracja źródeł danych, brak nowości i adaptacja do preferencji użytkownika.
 
 ## Techniki w uczeniu maszynowym
