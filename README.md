@@ -2,7 +2,7 @@
 
 Z1: Podstawowe zagadnienia systemów rekomendacyjnych
 
-Tematyka najbliższego tygodnia: 
+Tematyka najbliższego tygodnia:
 
 - collaborative filtering
 - content-based filtering
@@ -53,7 +53,7 @@ Modele hybrydowe oparte są na głębokich sieciach. Korzystają z osadzeń uży
 ## Techniki w uczeniu maszynowym
 
 - **K-NN** - technika popularna dla Collaborative Filtering.
-- **Clustering** - najpopularniejszy jest _K-means_. 
+- **Clustering** - najpopularniejszy jest _K-means_.
 - **Fuzzy logic** - uważane za komplementarne w stosunku do metod z rodziny Collaborative, często używane wraz z nimi.
 - **Matrix manipulation** - należą do tej rodziny techniki takie jak: _Singular Value Decomposition_ (SVD), _Latent Dirichlet Allocation_ (LDA), _Principal Component Analysis_ (PCA), _Dimensionality Reduction_ oraz _similar matrix factorization_.
 - inne, rzadziej wykorzystywane techniki: _Genetic Algorithms_, _Naive Bayes_, _Neural Networks_, _Notion of Experts_, _Statistical Modeling_, ect.
@@ -63,22 +63,42 @@ Modele hybrydowe oparte są na głębokich sieciach. Korzystają z osadzeń uży
 ### Research
 
 You can find research notebooks at the `./notebooks` directory.
+EDA is at `./notebooks/EDA` directory.
 
 ### Deserialization
 
 You can find serialized models at the `./models` directory.
 
-#### Matrix factorization
+#### Matrix Factorization
 
 ```py
 from pathlib import Path
 
 import torch
 
-from src.models.matrix_factorization import MatrixFactorization
+from src.models.torch.mf import MatrixFactorization
 
-model_path = Path('models/matrix-factorization.pt')
+model_path = Path('models/matrix_factorization.pt')
 model: MatrixFactorization = torch.load(model_path)
+model.eval()
+
+with torch.no_grad():
+    movies_ranking = model.predict(1)
+    movies_ranking, scores = model.predict_scores(1)
+    score = model.predict_score(1, 31)
+```
+
+#### Embedded Regression
+
+```py
+from pathlib import Path
+
+import torch
+
+from src.models.torch.embedded_regression import EmbeddedRegression
+
+model_path = Path('models/embedded_regression.pt')
+model: EmbeddedRegression = torch.load(model_path)
 model.eval()
 
 with torch.no_grad():
