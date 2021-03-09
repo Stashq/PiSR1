@@ -43,7 +43,7 @@ class RecommenderSystem(ABC):
         """
         pass
 
-    def predict_scores(self, user_id: int) -> List[Tuple[int, float]]:
+    def predict_scores(self, user_id: int) -> Tuple[List[int], List[float]]:
         """
         Predicts scores for all the movies, that a user would give.
 
@@ -54,7 +54,7 @@ class RecommenderSystem(ABC):
 
         Returns
         -------
-        float
+        Tuple[List[int], List[float]]
             Ranked movies with their scores.
         """
         pass
