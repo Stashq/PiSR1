@@ -1,6 +1,7 @@
 from typing import List
 
 import plotly.graph_objects as go
+from IPython.display import Image
 
 
 class Plot:
@@ -12,7 +13,7 @@ class Plot:
         self,
         losses: List[List[float]],
         names: List[str]
-    ):
+    ) -> Image:
         fig = go.Figure()
 
         for loss, name in zip(losses, names):
@@ -25,9 +26,12 @@ class Plot:
 
             fig.add_trace(trace)
 
-        fig.update_layout(title='Convergence')
-        fig.update_xaxes(title_text='Epochs')
-        fig.update_yaxes(title_text='MSE Loss')
+        fig.update_layout(
+            title='Convergence',
+            xaxis_title='Epochs',
+            yaxis_title='MSE Loss'
+        )
 
-        fig.show()
-        # return fig
+        fig.show(renderer='svg')
+        # img_bytes = fig.to_image(format='png', scale=5)
+        # return Image(img_bytes)
