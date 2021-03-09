@@ -12,7 +12,9 @@ class Plot:
     def convergence(
         self,
         losses: List[List[float]],
-        names: List[str]
+        names: List[str],
+        xaxis_title: str = '',
+        yaxis_title: str = ''
     ) -> Image:
         fig = go.Figure()
 
@@ -28,8 +30,8 @@ class Plot:
 
         fig.update_layout(
             title='Convergence',
-            xaxis_title='Epochs',
-            yaxis_title='MSE Loss'
+            xaxis_title=xaxis_title,
+            yaxis_title=yaxis_title
         )
 
         fig.show(renderer='svg')
