@@ -107,7 +107,7 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
 
         return rating
 
-    def predict_scores(self, user_id: int) -> List[Tuple[int, float]]:
+    def predict_scores(self, user_id: int) -> Tuple[List[int], List[float]]:
         """
         Predicts scores for all the movies, that a user would give.
 
@@ -118,7 +118,7 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
 
         Returns
         -------
-        float
+        Tuple[List[int], List[float]]
             Ranked movies with their scores.
         """
 
@@ -140,6 +140,7 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         movies = list(movies.cpu().numpy())
 
         movies = self.movie_encoder.inverse_transform(movies)
+        movies = list(movies)
 
         return movies, rating
 
