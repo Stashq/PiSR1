@@ -8,7 +8,11 @@ class Plot:
     def __init__(self):
         super(Plot, self).__init__()
 
-    def convergence(self, losses: List[List[float]], names: List[str]):
+    def convergence(
+        self,
+        losses: List[List[float]],
+        names: List[str]
+    ):
         fig = go.Figure()
 
         for loss, name in zip(losses, names):
@@ -26,3 +30,4 @@ class Plot:
         fig.update_yaxes(title_text='MSE Loss')
 
         fig.show()
+        # return fig
