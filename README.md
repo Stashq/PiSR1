@@ -60,6 +60,10 @@ Modele hybrydowe oparte są na głębokich sieciach. Korzystają z osadzeń uży
 
 ## Repository
 
+### Research
+
+You can find research notebooks at the `./notebooks` directory.
+
 ### Deserialization
 
 You can find serialized models at the `./models` directory.
