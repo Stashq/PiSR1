@@ -46,7 +46,14 @@ _Collaborative Filtering_ cierpi na problem _cold-start_. Systemy nie mogą reko
 
 ## Podejście hybrydowe
 
-Modele hybrydowe oparte są na głębokich sieciach. Korzystają z osadzeń użytkowników i obiektów zarówno z _Collaborative_Filtering_ jak i _Content-based Filtering_. Ich zaletą jest to, że dzięki nieliniowości są w stanie oddać cięższe do wychwycenia niuanse dotyczące gustów. Ponadto są wstanie operować na danych z różnych dziedzin (np. obraz i dźwięk). Utworzenie ich wymaga jednak bardzo dużo obliczeń i eksperymentów z hiperparametrami.
+Modele hybrydowe oparte są na głębokich sieciach. Wykorzystują wiedzę zdobytą z _Collaborative_Filtering_, _Content-based Filtering_ oraz innych wybranych technik zależnie od implementacji. Ich zaletą jest to, że dzięki nieliniowości są w stanie oddać cięższe do wychwycenia niuanse dotyczące gustów. Ponadto są wstanie operować na danych z różnych dziedzin (np. obraz i dźwięk). Utworzenie ich wymaga jednak bardzo dużo obliczeń i eksperymentów z hiperparametrami. Techniki rekomendacji możemy łączyć na wiele sposobów. Do tych technik należą:
+
+- **Weighted** - wyniki z wielu modeli łączone są w jedną rekomendację.
+- **Switching** - system przełącza się między modelami.
+- **Mixed** - system prezentuje część wyników z modeli.
+- **Feature combination** - cechy z wielu systemów przechodzą do następnego systemu rekomendacji.
+- **Cascade** - wyniki rekomendacji przekazywane są z modelu do modelu.
+- **Meta-level** - profil, którego nauczył się jeden model, jest używany jako dane wejściowe do innego.
 
 ## Techniki w uczeniu maszynowym
 
