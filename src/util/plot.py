@@ -93,3 +93,28 @@ class Plot:
         )
 
         fig.show(renderer='svg')
+
+    def histogram(
+        self,
+        x: List[float],
+        title: str,
+        xaxis_title: str = '',
+        yaxis_title: str = '',
+        use_log_scale: bool = False
+    ):
+        fig = go.Figure()
+
+        histogram = go.Histogram(x=x)
+
+        fig.add_trace(histogram)
+
+        if use_log_scale:
+            fig.update_yaxes(type="log")
+
+        fig.update_layout(
+            title=title,
+            xaxis_title=xaxis_title,
+            yaxis_title=yaxis_title
+        )
+
+        fig.show(renderer='svg')
