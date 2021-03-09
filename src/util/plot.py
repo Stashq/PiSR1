@@ -1,20 +1,12 @@
 from typing import List
 
 import plotly.graph_objects as go
-import plotly.io as pio
-import plotly.offline as pyo
 
 
 class Plot:
 
-    def __init__(self, image_width: int = 1200, image_height: int = 900):
+    def __init__(self):
         super(Plot, self).__init__()
-
-        self.IMAGE_WIDTH = image_width
-        self.IMAGE_HEIGHT = image_height
-
-        pyo.init_notebook_mode(connected=False)
-        pio.renderers.default = 'notebook'
 
     def convergence(
         self,
@@ -33,16 +25,9 @@ class Plot:
 
             fig.add_trace(trace)
 
-        fig.update_layout(
-            title='Convergence',
-            xaxis_title='Epochs',
-            yaxis_title='MSE Loss',
-        )
+        fig.update_layout(title='Convergence')
+        fig.update_xaxes(title_text='Epochs')
+        fig.update_yaxes(title_text='MSE Loss')
 
-        pyo.iplot(
-            fig,
-            # filename='filename',
-            image_width=self.IMAGE_WIDTH,
-            image_height=self.IMAGE_HEIGHT
-        )
-        # fig.show()
+        fig.show()
+        # return fig
