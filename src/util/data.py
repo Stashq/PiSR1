@@ -1,7 +1,34 @@
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tqdm.auto import tqdm
+from sklearn.utils import shuffle
+
+
+def get_train_test_ratings(
+    ratings: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+    movies, counts = np.unique(ratings['movieId'].values, return_counts=True)
+    single_movies = set(movies[counts == 1])
+    single_ratings = ratings.loc[ratings['movieId'].isin(single_movies)]
+
+    ratings = ratings.loc[~ratings['movieId'].isin(single_movies)]
+
+    train_ratings, test_ratings = train_test_split(
+        ratings,
+        test_size=0.1,
+        stratify=ratings['movieId'].values,
+        random_state=42
+    )
+
+    train_ratings = pd.concat([train_ratings, single_ratings])
+    train_ratings = shuffle(train_ratings, random_state=42)
+
+    return train_ratings, test_ratings
 
 
 def get_interactions(
