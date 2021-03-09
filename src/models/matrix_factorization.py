@@ -3,8 +3,15 @@ from typing import List, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from sklearn.preprocessing import LabelEncoder
 from src.models.recommender import RecommenderSystem
+from torch.utils.data import DataLoader, TensorDataset
+from tqdm.auto import tqdm
+
+DEVICE = torch.device("cpu")
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
 
 
 class MatrixFactorization(nn.Module, RecommenderSystem):
@@ -17,11 +24,6 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         movie_encoder: LabelEncoder
     ):
         super(MatrixFactorization, self).__init__()
-
-        self.DEVICE = torch.device("cpu")
-
-        if torch.cuda.is_available():
-            self.DEVICE = torch.device("cuda")
 
         self.interactions = interactions
         self.USER_DIM, self.MOVIE_DIM = self.interactions.shape
@@ -97,8 +99,8 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         user_id = self.user_encoder.transform([user_id])[0]
         movie_id = self.movie_encoder.transform([movie_id])[0]
 
-        user_id = torch.LongTensor([user_id]).to(self.DEVICE)
-        movie_id = torch.LongTensor([movie_id]).to(self.DEVICE)
+        user_id = torch.LongTensor([user_id]).to(DEVICE)
+        movie_id = torch.LongTensor([movie_id]).to(DEVICE)
 
         rating = self.forward(user_id, movie_id)
         rating = rating.cpu().item()
@@ -127,9 +129,9 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
 
         movies -= set(movies_seen)
         movies = list(movies)
-        movies = torch.LongTensor(movies).to(self.DEVICE)
+        movies = torch.LongTensor(movies).to(DEVICE)
 
-        user_id = torch.LongTensor([user_id]).to(self.DEVICE)
+        user_id = torch.LongTensor([user_id]).to(DEVICE)
 
         rating = self.forward(user_id, movies)
         rating, movies = torch.sort(rating, descending=True)
@@ -140,3 +142,73 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         movies = self.movie_encoder.inverse_transform(movies)
 
         return movies, rating
+
+
+def get_dataset(interactions: np.ndarray) -> TensorDataset:
+    users, movies = interactions.nonzero()
+    ratings = interactions[users, movies]
+
+    permutation = torch.randperm(len(users))
+
+    users = users[permutation]
+    movies = movies[permutation]
+    ratings = ratings[permutation]
+
+    users = torch.LongTensor(users).to(DEVICE)
+    movies = torch.LongTensor(movies).to(DEVICE)
+    ratings = torch.FloatTensor(ratings).to(DEVICE)
+
+    return TensorDataset(users, movies, ratings)
+
+
+def train(
+    model: MatrixFactorization,
+    train_interactions: np.ndarray,
+    test_interactions: np.ndarray,
+    epochs: int,
+    batch_size: int,
+    verbose: int = 0
+):
+    loss_func = nn.MSELoss()
+
+    optimizer = optim.SparseAdam(model.parameters(), lr=1e-3)
+
+    train_loss_history = []
+    test_loss_history = []
+
+    train_dataset = get_dataset(train_interactions)
+    test_dataset = get_dataset(test_interactions)
+    test_users, test_movies, test_ratings = test_dataset.tensors
+
+    data_loader = DataLoader(train_dataset, batch_size=batch_size)
+
+    model.to(DEVICE)
+
+    for epoch in tqdm(range(0, epochs), desc='Training'):
+        train_loss = 0
+
+        for users_batch, movies_batch, ratings_batch in data_loader:
+            optimizer.zero_grad()
+
+            prediction = model(users_batch, movies_batch)
+            loss = loss_func(prediction, ratings_batch)
+
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()
+
+        test_prediction = model(test_users, test_movies)
+        test_loss = loss_func(test_prediction, test_ratings).item()
+
+        train_loss /= len(data_loader)
+
+        train_loss_history.append(train_loss)
+        test_loss_history.append(test_loss)
+
+        if verbose:
+            msg = f'Train loss: {train_loss:.3f}, '
+            msg += f'Test loss: {test_loss:.3f}'
+            tqdm.write(msg)
+
+    return train_loss_history, test_loss_history
