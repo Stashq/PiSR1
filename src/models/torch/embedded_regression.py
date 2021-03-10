@@ -124,7 +124,7 @@ class EmbeddedRegression(nn.Module, RecommenderSystem):
         rating = self.forward(user_id, movie_id)
         rating = rating.cpu().item()
 
-        return rating * 5
+        return rating * self.MAX_RATING
 
     def predict_scores(self, user_id: int) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -152,7 +152,7 @@ class EmbeddedRegression(nn.Module, RecommenderSystem):
 
         user = torch.LongTensor([user_id] * len(movies)).to(DEVICE)
 
-        ratings = self.forward(user, movies).squeeze() * 5
+        ratings = self.forward(user, movies).squeeze() * self.MAX_RATING
 
         ratings = list(ratings.cpu().numpy())
         movies = list(movies.cpu().numpy())
