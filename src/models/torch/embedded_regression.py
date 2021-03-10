@@ -24,6 +24,9 @@ class EmbeddedRegression(nn.Module, RecommenderSystem):
     ):
         super(EmbeddedRegression, self).__init__()
 
+        self.MAX_RATING = 5
+        self.MIN_RATING = 0
+
         self.interactions = interactions
         self.USER_DIM, self.MOVIE_DIM = self.interactions.shape
         self.N_FACTORS = n_factors

@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import pandas as pd
-from sklearn.metrics import classification_report, r2_score
+from sklearn.metrics import classification_report, r2_score, ndcg_score
 from src.models.recommender import RecommenderSystem
 from tqdm.auto import tqdm
 
@@ -121,3 +121,40 @@ def get_r2_score(
             total_pred_scores.append(pred_score)
 
     return r2_score(total_test_scores, total_pred_scores)
+
+
+def get_ndcg_score(
+    model: RecommenderSystem,
+    test_ratings: pd.DataFrame
+) -> List[float]:
+
+    test_users = set(test_ratings['userId'].values)
+
+    ndcg_scores = []
+
+    for user_id in tqdm(test_users, desc='Testing predictions'):
+        pred_movies, pred_scores = model.predict_scores(user_id)
+
+        pred_movies = {
+            movie_id: score
+            for movie_id, score
+            in zip(pred_movies, pred_scores)
+        }
+
+        test_user_ratings = test_ratings.loc[test_ratings['userId'] == user_id]
+        test_user_ratings = test_user_ratings.sort_values(
+            by='rating',
+            ascending=False
+        )
+        test_user_movies = test_user_ratings['movieId'].values
+
+        pred_movies_scores = []
+
+        for movie_id in test_user_ratings['movieId'].values:
+            pred_score = pred_movies[movie_id]
+            pred_movies_scores.append(pred_score)
+
+        ndcg = ndcg_score([test_user_movies], [pred_movies_scores])
+        ndcg_scores.append(ndcg)
+
+    return ndcg_scores
