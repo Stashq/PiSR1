@@ -2,14 +2,13 @@
 from typing import Set
 import pandas as pd
 import numpy as np
-from lightfm import LightFM
 from scipy.sparse import coo_matrix, csr_matrix
 
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from src.util.data import get_interactions, get_train_test_ratings
 
-from src.models.hybrid import Hybrid
+from src.models.hybrid import HybridRecommenderSystem
 
 MOVIES = "data/movies_metadata.csv"
 
@@ -107,23 +106,25 @@ def train():
     )
     test_interactions = coo_matrix(test_interactions)
 
-    movies = get_movies_features(
+    movie_features = get_movies_features(
         movie_encoder,
         movies_to_keep=set(ratings["movieId"].values)
     )
-    movies = csr_matrix(movies.values)
-    model = LightFM()
+    movie_features = csr_matrix(movie_features.values)
+    model = HybridRecommenderSystem(user_encoder, movie_encoder)
     model.fit(
-        interactions=train_interactions,
-        item_features=movies,
+        train_interactions,
+        movie_features,
         epochs=5,
-        num_threads=2
+        num_threads=4
     )
+
+    foo = model.predict_scores(2)
+    foo = 2
 
 
 def main():
-    model = Hybrid()
-    model.train()
+    train()
 
 
 if __name__ == '__main__':

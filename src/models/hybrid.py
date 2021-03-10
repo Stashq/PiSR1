@@ -1,131 +1,50 @@
-from typing import List, Tuple
-import numpy as np
-from src.models.recommender import RecommenderSystem
+from typing import List, Set, Tuple
 
-from typing import Set
+import numpy as np
 import pandas as pd
 from lightfm import LightFM
 from scipy.sparse import coo_matrix, csr_matrix
-
-from pathlib import Path
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from src.util.data import get_interactions, get_train_test_ratings
-
-MOVIES = "data/movies_metadata.csv"
+from sklearn.preprocessing import LabelEncoder
+from src.models.recommender import RecommenderSystem
 
 
-class Hybrid(RecommenderSystem):
+class HybridRecommenderSystem(RecommenderSystem):
 
-    def __init__(self):
+    def __init__(
+        self,
+        user_encoder: LabelEncoder,
+        movie_encoder: LabelEncoder
+    ):
         super(RecommenderSystem, self).__init__()
-        self.MAX_RATING = 5
-        self.MIN_RATING = 0
+
+        self.USER_DIM: int
+        self.MOVIE_DIM: int
+
+        self.interactions: coo_matrix
+        self.movie_features: csr_matrix
+
+        self.user_encoder = user_encoder
+        self.movie_encoder = movie_encoder
+
         self.model = LightFM()
 
-    def train(self):
-        RATINGS_PATH = Path('data/ratings_small.csv')
-        ratings = pd.read_csv(RATINGS_PATH)
+    def fit(
+        self,
+        interactions: coo_matrix,
+        movie_features: csr_matrix,
+        epochs: int,
+        num_threads: int
+    ):
+        self.USER_DIM, self.MOVIE_DIM = interactions.shape
+        self.interactions = interactions
+        self.movie_features = movie_features
 
-        user_encoder = LabelEncoder()
-        user_encoder.fit(ratings['userId'].values)
-
-        movie_encoder = LabelEncoder()
-        movie_encoder.fit(ratings['movieId'].values)
-
-        train_ratings, test_ratings = get_train_test_ratings(ratings)
-
-        train_interactions = get_interactions(
-            train_ratings,
-            user_encoder,
-            movie_encoder
-        )
-        train_interactions = coo_matrix(train_interactions)
-
-        test_interactions = get_interactions(
-            test_ratings,
-            user_encoder,
-            movie_encoder
-        )
-        test_interactions = coo_matrix(test_interactions)
-
-        movies = self._getMoviesContentDataset(
-            movie_encoder,
-            movies_to_keep=set(ratings["movieId"].values)
-        )
-        movies = csr_matrix(movies.values)
         self.model.fit(
-            interactions=train_interactions,
-            item_features=movies,
+            interactions,
+            item_features=movie_features,
             epochs=5,
             num_threads=2
         )
-
-    def _getMoviesContentDataset(
-        self,
-        movie_encoder: LabelEncoder,
-        movies_to_keep: Set[int]
-    ):
-        movies = pd.read_csv(MOVIES)
-        to_drop = ["1997-08-20", "2012-09-29", "2014-01-01"]
-        for drop_error in to_drop:
-            movies = movies[movies.id != drop_error]
-
-        movies.id = movies.id.astype('int64')
-        movies = movies.loc[movies['id'].isin(movies_to_keep)]
-        movies.id = movie_encoder.transform(movies.id)
-        movies_to_keep = movie_encoder.transform(list(movies_to_keep))
-
-        movies = movies.drop_duplicates(subset=['id'], keep='first')
-
-        budget_Scaler = StandardScaler().fit(movies.budget.to_numpy().reshape(-1, 1))
-
-        lang_encoder = LabelEncoder().fit(movies.original_language)
-
-        genres_encoder = LabelEncoder().fit(movies.genres)
-
-        spoken_languages_encoder = LabelEncoder().fit(movies.spoken_languages)
-
-        adult_encoder = LabelEncoder().fit(movies.adult)
-
-        belongs_to_collection_encoder = LabelEncoder().fit(
-            movies.belongs_to_collection
-        )
-
-        movies.belongs_to_collection = belongs_to_collection_encoder.transform(
-            movies.belongs_to_collection
-        )
-        movies.original_language = lang_encoder.transform(
-            movies.original_language
-        )
-        movies.adult = adult_encoder.transform(movies.adult)
-        movies.spoken_languages = spoken_languages_encoder.transform(
-            movies.spoken_languages
-        )
-        movies.genres = genres_encoder.transform(movies.genres)
-        movies.budget = budget_Scaler.transform(
-            movies.budget.to_numpy().reshape(-1, 1)
-        )
-        movies.popularity = movies.popularity.astype("float64")
-
-        movies = movies.drop(["homepage", "imdb_id", "original_title",
-                            "overview", "poster_path",
-                            "production_companies", "production_countries",
-                            "release_date", "status", "tagline",
-                            "title", "video"], axis=1)
-        movies = movies.set_index("id")
-        movies = movies.dropna()
-
-        not_included_ids = [idx for idx in movies_to_keep
-                            if idx not in movies.index]
-        missing_movies = [[0] * movies.shape[1]] * len(not_included_ids)
-        missing_movies = pd.DataFrame(
-            data=missing_movies,
-            columns=movies.columns,
-            index=not_included_ids
-        )
-        movies = pd.concat([movies, missing_movies])
-        movies = movies.sort_index()
-        return movies
 
     def predict(self, user_id: int) -> List[int]:
         """
@@ -141,7 +60,7 @@ class Hybrid(RecommenderSystem):
         List[int]
             List of movies ids. Best recommendations first.
         """
-        self.model.predict(user_id, item_ids, item_features=None, user_features=None, num_threads=1)
+        # self.model.predict(user_id, item_ids, item_features=None, user_features=None, num_threads=1)
         pass
 
     def predict_score(self, user_id: int, movie_id: int) -> float:
@@ -176,4 +95,46 @@ class Hybrid(RecommenderSystem):
         Tuple[np.ndarray, np.ndarray]:
             Ranked movies with their scores.
         """
-        pass
+        user_id = self.user_encoder.transform([user_id])[0]
+        user_id = int(user_id)
+
+        movies = set(range(self.MOVIE_DIM))
+        movies_seen = self.interactions.getrow(user_id).toarray().squeeze()
+        movies_seen = movies_seen.nonzero()[0]
+        movies -= set(movies_seen)
+        movies = list(movies)
+
+        movie_features = self.movie_features.toarray()[movies]
+        movie_features = csr_matrix(movie_features)
+
+        user_id = np.array([user_id] * len(movies))
+        movies = np.array(movies)
+        # movies = np.array([0])
+
+        # ratings = self.model.predict(
+        #     user_ids=user_id,
+        #     item_ids=movies
+        # )
+
+        ratings = self.model.predict(
+            user_ids=np.array([0, 0, 0]),
+            item_ids=np.array([1, 2, 3])
+        )
+
+
+        ranking = pd.DataFrame(
+            zip(movies, ratings),
+            columns=['movie', 'rating']
+        )
+
+        ranking = ranking.sort_values(
+            by='rating',
+            ascending=False
+        )
+
+        movies = ranking['movie'].values
+        ratings = ranking['rating'].values
+
+        movies = self.movie_encoder.inverse_transform(movies)
+
+        return movies, ratings
