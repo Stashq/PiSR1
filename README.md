@@ -1,7 +1,9 @@
 # PiSR1
+
 Z1: Podstawowe zagadnienia systemów rekomendacyjnych
 
-Tematyka najbliższego tygodnia:  
+Tematyka najbliższego tygodnia:
+
 - collaborative filtering
 - content-based filtering
 - demographic recommendation
@@ -9,7 +11,8 @@ Tematyka najbliższego tygodnia:
 - K-nearest neighbours classification
 - porównanie miar podobieństwa
 
-Wymagany czas: ok. 4h / os. pracy własnej:  
+Wymagany czas: ok. 4h / os. pracy własnej:
+
 1. czytanie 1h
 2. przykłady kodu, zapoznanie się z
 istniejącymi projektami 1h
@@ -29,7 +32,6 @@ prezentacji 40 minut
 - **Popularity bias** - występuje, gdy system rekomenduje obiekty z największą liczbą interakcji, bez jakiejkolwiek personalizacji.
 - inne problemy takie jak: brak personalizacji, ochrona prywatności, redukcja szumów, integracja źródeł danych, brak nowości i adaptacja do preferencji użytkownika.
 
-
 ## Collaborative Filtering
 
 Wyobraźmy sobie, że mamy macierz, której komórki reprezentują recenzje obiektów pozostawione przez użytkowników. W kolumnach umieszczone mamy recencje dla konkretnych obiektów, a w wierszach recencje konkretnych użytkowników. Wyróżniamy następujące rodzaje Collaborative Filteringu:
@@ -37,8 +39,8 @@ Wyobraźmy sobie, że mamy macierz, której komórki reprezentują recenzje obie
 - **user-user** - porównujemy użytkowników (wiersze) i zwracamy dla użytkownika te obiekty, które wystąpiły u podobnych użytkowników z wysokim rankingiem. Działa świetnie gdy jest mało użytkowników (wierszy) i dużo obiektów (kolumn).
 - **item-item** - porównujemy obiekty (kolumny) i obserwując oceny między nimi uzupełniamy ich wybrakowane oceny. Działa świetnie gdy jest mało obiektów (kolumn) i dużo użytkowników (wierszy). 
 - **user-item** - wykorzystuje cechy obu poprzednich technik. Najprostsza z metod oparta jest na faktoryzacji macierzy, dzięki której otrzymujemy osadzenia opisujące jak bardzo dany obiekt zawiera daną cechę i jakimi obiektami interesuje się dany użytkownik. Najczęściej wykorzystywane metody z tej rodziny to:
-    - **Singular Value Decomposition** - najpopularniejsza z tej rodziny metod. Przedmioty i użytkowników reprezentujemy w postaci wektorów tak, że po przemnożeniu otrzymujemy wysokość oceny. Metoda ta jest wymagająca obliczeniowo i słabo skalowanlna.
-    - **Alternating Least Square** - metoda nadająca się do wykorzystania przy średniej wielkości danych.
+  - **Singular Value Decomposition** - najpopularniejsza z tej rodziny metod. Przedmioty i użytkowników reprezentujemy w postaci wektorów tak, że po przemnożeniu otrzymujemy wysokość oceny. Metoda ta jest wymagająca obliczeniowo i słabo skalowanlna.
+  - **Alternating Least Square** - metoda nadająca się do wykorzystania przy średniej wielkości danych.
 
 ## Content-based Filtering
 
@@ -51,8 +53,56 @@ Modele hybrydowe oparte są na głębokich sieciach. Korzystają z osadzeń uży
 ## Techniki w uczeniu maszynowym
 
 - **K-NN** - technika popularna dla Collaborative Filtering.
-- **Clustering** - najpopularniejszy jest _K-means_. 
+- **Clustering** - najpopularniejszy jest _K-means_.
 - **Fuzzy logic** - uważane za komplementarne w stosunku do metod z rodziny Collaborative, często używane wraz z nimi.
 - **Matrix manipulation** - należą do tej rodziny techniki takie jak: _Singular Value Decomposition_ (SVD), _Latent Dirichlet Allocation_ (LDA), _Principal Component Analysis_ (PCA), _Dimensionality Reduction_ oraz _similar matrix factorization_.
 - inne, rzadziej wykorzystywane techniki: _Genetic Algorithms_, _Naive Bayes_, _Neural Networks_, _Notion of Experts_, _Statistical Modeling_, ect.
 
+## Repository
+
+### Research
+
+You can find research notebooks at the `./notebooks` directory.
+EDA is at `./notebooks/EDA` directory.
+
+### Deserialization
+
+You can find serialized models at the `./models` directory.
+
+#### Matrix Factorization
+
+```py
+from pathlib import Path
+
+import torch
+
+from src.models.torch.mf import MatrixFactorization
+
+model_path = Path('models/matrix_factorization.pt')
+model: MatrixFactorization = torch.load(model_path)
+model.eval()
+
+with torch.no_grad():
+    movies_ranking = model.predict(1)
+    movies_ranking, scores = model.predict_scores(1)
+    score = model.predict_score(1, 31)
+```
+
+#### Embedded Regression
+
+```py
+from pathlib import Path
+
+import torch
+
+from src.models.torch.embedded_regression import EmbeddedRegression
+
+model_path = Path('models/embedded_regression.pt')
+model: EmbeddedRegression = torch.load(model_path)
+model.eval()
+
+with torch.no_grad():
+    movies_ranking = model.predict(1)
+    movies_ranking, scores = model.predict_scores(1)
+    score = model.predict_score(1, 31)
+```

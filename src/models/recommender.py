@@ -1,6 +1,8 @@
 from abc import ABC
 from typing import List, Tuple
 
+import numpy as np
+
 
 class RecommenderSystem(ABC):
 
@@ -43,7 +45,7 @@ class RecommenderSystem(ABC):
         """
         pass
 
-    def predict_scores(self, user_id: int) -> List[Tuple[int, float]]:
+    def predict_scores(self, user_id: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Predicts scores for all the movies, that a user would give.
 
@@ -54,7 +56,7 @@ class RecommenderSystem(ABC):
 
         Returns
         -------
-        float
+        Tuple[np.ndarray, np.ndarray]:
             Ranked movies with their scores.
         """
         pass
