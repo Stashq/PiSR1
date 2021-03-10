@@ -32,6 +32,7 @@ class HybridRecommenderSystem(RecommenderSystem):
         self,
         interactions: coo_matrix,
         movie_features: csr_matrix,
+        no_components: int,
         epochs: int,
         num_threads: int
     ):
@@ -39,13 +40,13 @@ class HybridRecommenderSystem(RecommenderSystem):
         self.interactions = interactions
         self.movie_features = movie_features
 
-        self.model = LightFM()
+        self.model = LightFM(no_components=no_components)
 
         self.model.fit(
             interactions,
             item_features=movie_features,
-            epochs=5,
-            num_threads=2
+            epochs=epochs,
+            num_threads=num_threads
         )
 
     def predict(self, user_id: int) -> List[int]:
