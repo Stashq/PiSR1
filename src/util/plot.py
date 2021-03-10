@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import plotly.graph_objects as go
 from IPython.display import Image
@@ -112,6 +112,37 @@ class Plot:
 
         if use_log_scale:
             fig.update_yaxes(type="log")
+
+        fig.update_layout(
+            title=title,
+            xaxis_title=xaxis_title,
+            yaxis_title=yaxis_title
+        )
+
+        fig.show(renderer='svg')
+
+    def bar(
+        self,
+        data: Dict[str, float],
+        title: str,
+        xaxis_title: str = '',
+        yaxis_title: str = '',
+    ):
+        fig = go.Figure()
+
+        x, y = data.keys(), data.values()
+        xy = zip(x, y)
+        xy = sorted(xy, key=lambda key_value: key_value[0])
+        x, y = zip(*xy)
+
+        bar = go.Bar(
+            x=x,
+            y=y,
+            text=[f'{value:.2f}' for value in y],
+            textposition='auto',
+        )
+
+        fig.add_trace(bar)
 
         fig.update_layout(
             title=title,
