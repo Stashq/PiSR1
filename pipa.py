@@ -9,6 +9,8 @@ from pathlib import Path
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from src.util.data import get_interactions, get_train_test_ratings
 
+from src.models.hybrid import Hybrid
+
 MOVIES = "data/movies_metadata.csv"
 
 
@@ -79,7 +81,7 @@ def getMoviesContentDataset(
     return movies
 
 
-def main():
+def train():
     RATINGS_PATH = Path('data/ratings_small.csv')
     ratings = pd.read_csv(RATINGS_PATH)
 
@@ -117,6 +119,12 @@ def main():
         epochs=5,
         num_threads=2
     )
+
+
+def main():
+    model = Hybrid()
+    model.train()
+
 
 if __name__ == '__main__':
     main()
