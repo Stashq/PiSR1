@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import pandas as pd
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, r2_score
 from src.models.recommender import RecommenderSystem
 from tqdm.auto import tqdm
 
@@ -37,7 +37,7 @@ def get_jaccard_ranking(
     return jaccard_scores
 
 
-def get_ranking_metrics(
+def get_classification_ranking_metrics(
     model: RecommenderSystem,
     test_ratings: pd.DataFrame
 ) -> Dict[str, float]:
@@ -64,5 +64,43 @@ def get_ranking_metrics(
             test.append(True)
             pred.append(movie_id in pred_liked_movies)
 
-    return classification_report(test, pred)
+    report = classification_report(test, pred, output_dict=True)
+    metrics = report['macro avg']
+    metrics['accuracy'] = report['accuracy']
+    del metrics['support']
 
+    return metrics
+
+
+def get_r2_score(
+    model: RecommenderSystem,
+    test_ratings: pd.DataFrame
+) -> List[float]:
+
+    test_users = set(test_ratings['userId'].values)
+
+    total_test_scores = []
+    total_pred_scores = []
+
+    for user_id in tqdm(test_users, desc='Testing predictions'):
+        pred_movies, pred_scores = model.predict_scores(user_id)
+
+        pred_movies = {
+            movie_id: score
+            for movie_id, score
+            in zip(pred_movies, pred_scores)
+        }
+
+        test_user_ratings = test_ratings.loc[test_ratings['userId'] == user_id]
+        test_user_movies = test_user_ratings['movieId'].values
+        test_user_scores = test_user_ratings['rating'].values
+
+        for test_movie_id, test_user_score in zip(
+            test_user_movies,
+            test_user_scores
+        ):
+            pred_score = pred_movies[test_movie_id]
+            total_test_scores.append(test_user_score)
+            total_pred_scores.append(pred_score)
+
+    return r2_score(total_test_scores, total_pred_scores)
