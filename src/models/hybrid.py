@@ -2,66 +2,52 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
+from lightfm import LightFM
+from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.preprocessing import LabelEncoder
 from src.models.recommender import RecommenderSystem
 
-DEVICE = torch.device("cpu")
-if torch.cuda.is_available():
-    DEVICE = torch.device("cuda")
 
-
-class MatrixFactorization(nn.Module, RecommenderSystem):
+class HybridRecommenderSystem(RecommenderSystem):
 
     def __init__(
         self,
-        interactions: np.ndarray,
-        n_factors: int,
         user_encoder: LabelEncoder,
         movie_encoder: LabelEncoder
     ):
-        super(MatrixFactorization, self).__init__()
+        super(HybridRecommenderSystem, self).__init__()
 
-        self.interactions = interactions
-        self.USER_DIM, self.MOVIE_DIM = self.interactions.shape
-        self.N_FACTORS = n_factors
+        self.USER_DIM: int
+        self.MOVIE_DIM: int
+
+        self.interactions: coo_matrix
+        self.movie_features: csr_matrix
 
         self.user_encoder = user_encoder
         self.movie_encoder = movie_encoder
 
-        self.setup()
+        self.model: LightFM
 
-    def setup(self):
-        self.user_embedding = nn.Embedding(
-            self.USER_DIM,
-            self.N_FACTORS,
-            sparse=True
-        )
-
-        self.movie_embedding = nn.Embedding(
-            self.MOVIE_DIM,
-            self.N_FACTORS,
-            sparse=True
-        )
-
-        self.user_bias = nn.Embedding(self.USER_DIM, 1, sparse=True)
-        self.movie_bias = nn.Embedding(self.MOVIE_DIM, 1, sparse=True)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(
+    def fit(
         self,
-        users: torch.LongTensor,
-        movies: torch.LongTensor
-    ) -> torch.FloatTensor:
+        interactions: coo_matrix,
+        movie_features: csr_matrix,
+        no_components: int,
+        epochs: int,
+        num_threads: int
+    ):
+        self.USER_DIM, self.MOVIE_DIM = interactions.shape
+        self.interactions = interactions
+        self.movie_features = movie_features
 
-        rating = self.user_embedding(users) * self.movie_embedding(movies)
-        rating = rating.sum(1, keepdim=True)
-        rating += self.user_bias(users)
-        rating += self.movie_bias(movies)
-        rating = self.sigmoid(rating)
-        rating = rating.squeeze()
-        return rating
+        self.model = LightFM(no_components=no_components)
+
+        self.model.fit(
+            interactions,
+            item_features=movie_features,
+            epochs=epochs,
+            num_threads=num_threads
+        )
 
     def predict(self, user_id: int) -> List[int]:
         """
@@ -96,16 +82,16 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         float
             Predicted movie's score in range [0, 5].
         """
-        user_id = self.user_encoder.transform([user_id])[0]
-        movie_id = self.movie_encoder.transform([movie_id])[0]
+        user_id = self.user_encoder.transform([user_id])
+        movie_id = self.movie_encoder.transform([movie_id])
 
-        user_id = torch.LongTensor([user_id]).to(DEVICE)
-        movie_id = torch.LongTensor([movie_id]).to(DEVICE)
+        rating = self.model.predict(
+            user_ids=user_id,
+            item_ids=movie_id,
+            item_features=self.movie_features
+        )
 
-        rating = self.forward(user_id, movie_id)
-        rating = rating.cpu().item()
-
-        return rating * self.MAX_RATING
+        return float(rating) * self.MAX_RATING
 
     def predict_scores(self, user_id: int) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -121,22 +107,25 @@ class MatrixFactorization(nn.Module, RecommenderSystem):
         Tuple[np.ndarray, np.ndarray]:
             Ranked movies with their scores.
         """
-
         user_id = self.user_encoder.transform([user_id])[0]
+        user_id = int(user_id)
 
         movies = set(range(self.MOVIE_DIM))
-        movies_seen = self.interactions[user_id].nonzero()[0]
-
+        movies_seen = self.interactions.getrow(user_id).toarray().squeeze()
+        movies_seen = movies_seen.nonzero()[0]
         movies -= set(movies_seen)
         movies = list(movies)
-        movies = torch.LongTensor(movies).to(DEVICE)
 
-        user = torch.LongTensor([user_id]).to(DEVICE)
+        user_id = np.array([user_id] * len(movies))
+        movies = np.array(movies)
 
-        ratings = self.forward(user, movies) * self.MAX_RATING
+        ratings = self.model.predict(
+            user_ids=user_id,
+            item_ids=movies,
+            item_features=self.movie_features
+        )
 
-        ratings = list(ratings.cpu().numpy())
-        movies = list(movies.cpu().numpy())
+        ratings *= self.MAX_RATING
 
         ranking = pd.DataFrame(
             zip(movies, ratings),
