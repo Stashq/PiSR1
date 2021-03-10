@@ -97,6 +97,9 @@ def train():
         user_encoder,
         movie_encoder
     )
+
+    train_interactions /= 5
+
     train_interactions = coo_matrix(train_interactions)
 
     test_interactions = get_interactions(
@@ -119,7 +122,9 @@ def train():
         num_threads=4
     )
 
-    foo = model.predict_scores(2)
+    foo = model.predict_scores(500)
+    foo = model.predict_score(1, 2)
+    foo = model.predict(10)
     foo = 2
 
 

@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ class HybridRecommenderSystem(RecommenderSystem):
         user_encoder: LabelEncoder,
         movie_encoder: LabelEncoder
     ):
-        super(RecommenderSystem, self).__init__()
+        super(HybridRecommenderSystem, self).__init__()
 
         self.USER_DIM: int
         self.MOVIE_DIM: int
@@ -26,7 +26,7 @@ class HybridRecommenderSystem(RecommenderSystem):
         self.user_encoder = user_encoder
         self.movie_encoder = movie_encoder
 
-        self.model = LightFM()
+        self.model: LightFM
 
     def fit(
         self,
@@ -38,6 +38,8 @@ class HybridRecommenderSystem(RecommenderSystem):
         self.USER_DIM, self.MOVIE_DIM = interactions.shape
         self.interactions = interactions
         self.movie_features = movie_features
+
+        self.model = LightFM()
 
         self.model.fit(
             interactions,
@@ -60,8 +62,8 @@ class HybridRecommenderSystem(RecommenderSystem):
         List[int]
             List of movies ids. Best recommendations first.
         """
-        # self.model.predict(user_id, item_ids, item_features=None, user_features=None, num_threads=1)
-        pass
+        movies, rating = self.predict_scores(user_id)
+        return list(movies)
 
     def predict_score(self, user_id: int, movie_id: int) -> float:
         """
@@ -79,7 +81,16 @@ class HybridRecommenderSystem(RecommenderSystem):
         float
             Predicted movie's score in range [0, 5].
         """
-        pass
+        user_id = self.user_encoder.transform([user_id])
+        movie_id = self.movie_encoder.transform([movie_id])
+
+        rating = self.model.predict(
+            user_ids=user_id,
+            item_ids=movie_id,
+            item_features=self.movie_features
+        )
+
+        return float(rating) * self.MAX_RATING
 
     def predict_scores(self, user_id: int) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -104,23 +115,16 @@ class HybridRecommenderSystem(RecommenderSystem):
         movies -= set(movies_seen)
         movies = list(movies)
 
-        movie_features = self.movie_features.toarray()[movies]
-        movie_features = csr_matrix(movie_features)
-
         user_id = np.array([user_id] * len(movies))
         movies = np.array(movies)
-        # movies = np.array([0])
-
-        # ratings = self.model.predict(
-        #     user_ids=user_id,
-        #     item_ids=movies
-        # )
 
         ratings = self.model.predict(
-            user_ids=np.array([0, 0, 0]),
-            item_ids=np.array([1, 2, 3])
+            user_ids=user_id,
+            item_ids=movies,
+            item_features=self.movie_features
         )
 
+        ratings *= self.MAX_RATING
 
         ranking = pd.DataFrame(
             zip(movies, ratings),
